@@ -6,6 +6,7 @@ class ListingsRouter {
     this.controller = controller;
     this.auth = auth;
   }
+
   routes() {
     // we will insert routes into here later on
     router.get("/", this.controller.getAll.bind(this.controller));
@@ -19,7 +20,7 @@ class ListingsRouter {
 
     // route protected with middleware
     router.put(
-      "/:listingId",
+      "/:listingId/buy",
       this.auth,
       this.controller.buyItem.bind(this.controller)
     );

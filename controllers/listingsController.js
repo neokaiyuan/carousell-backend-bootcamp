@@ -6,13 +6,21 @@ class ListingsController extends BaseController {
     this.userModel = userModel;
   }
 
-  /** if a method in this extended class AND the base class has the same name, the one in the extended class will run over the base method */
-  // Create listing. Requires authentication.
+  /**
+   * Create listing. Requires authentication.
+   * @param {Request} req - Express request object
+   * @param {Response} res - Express response object
+   */
   async insertOne(req, res) {
     const { title, category, condition, price, description, shippingDetails } =
       req.body;
     try {
-      // TODO: Get seller email from auth, query Users table for seller ID
+      // Retrieve seller from DB via seller email from auth
+      const [seller] = await this.userModel.findOrCreate({
+        where: {
+          email: req.body.sellerEmail,
+        },
+      });
 
       // Create new listing
       const newListing = await this.model.create({
@@ -23,38 +31,54 @@ class ListingsController extends BaseController {
         description: description,
         shippingDetails: shippingDetails,
         buyerId: null,
-        sellerId: 1, // TODO: Replace with seller ID of authenticated seller
+        sellerId: seller.id,
       });
 
       // Respond with new listing
       return res.json(newListing);
     } catch (err) {
+      console.error(err);
       return res.status(400).json({ error: true, msg: err });
     }
   }
 
-  // Retrieve specific listing. No authentication required.
+  /**
+   * Retrieve specific listing. No authentication required.
+   * @param {Request} req - Express request object
+   * @param {Response} res - Express response object
+   */
   async getOne(req, res) {
     const { listingId } = req.params;
     try {
-      const output = await this.model.findByPk(listingId);
-      return res.json(output);
+      const listing = await this.model.findByPk(listingId);
+      console.log(listing);
+      return res.json(listing);
     } catch (err) {
       return res.status(400).json({ error: true, msg: err });
     }
   }
 
-  // Buy specific listing. Requires authentication.
+  /**
+   * Buy specific listing. Requires authentication.
+   * @param {Request} req - Express request object
+   * @param {Response} res - Express response object
+   */
   async buyItem(req, res) {
     const { listingId } = req.params;
     try {
-      const data = await this.model.findByPk(listingId);
+      const listing = await this.model.findByPk(listingId);
 
-      // TODO: Get buyer email from auth, query Users table for buyer ID
-      await data.update({ buyerId: 1 }); // TODO: Replace with buyer ID of authenticated buyer
+      // Retrieve seller from DB via seller email from auth
+      const [buyer] = await this.userModel.findOrCreate({
+        where: {
+          email: req.body.buyerEmail,
+        },
+      });
+
+      await listing.update({ buyerId: buyer.id });
 
       // Respond to acknowledge update
-      return res.json(data);
+      return res.json(listing);
     } catch (err) {
       return res.status(400).json({ error: true, msg: err });
     }
