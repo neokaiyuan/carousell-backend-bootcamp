@@ -51,7 +51,6 @@ class ListingsController extends BaseController {
     const { listingId } = req.params;
     try {
       const listing = await this.model.findByPk(listingId);
-      console.log(listing);
       return res.json(listing);
     } catch (err) {
       return res.status(400).json({ error: true, msg: err });
